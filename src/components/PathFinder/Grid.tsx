@@ -25,8 +25,8 @@ export function Grid({ rows, columns, startPoint, endPoint }: IGridProps) {
           <Cell
             isStartPoint={columnI === startPoint[0] && rowI === startPoint[1]}
             isEndPoint={columnI === endPoint[0] && rowI === endPoint[1]}
-            width={` ${Math.floor((1 / columns) * 100)}%`}
-            height={`${Math.floor((1 / rows) * 100)}%`}
+            width={` ${(1 / columns) * 100}%`}
+            height={`${(1 / rows) * 100}%`}
           />
         ))
       )}
