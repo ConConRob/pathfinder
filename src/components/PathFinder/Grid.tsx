@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { Cell } from './Cell';
 import styled from 'styled-components';
+import { tCoords } from './PathFinder';
 
 interface IGridProps {
   rows: number;
   columns: number;
-  startPoint: [number, number];
-  endPoint: [number, number];
+  startPoint: tCoords;
+  endPoint: tCoords;
+  setStartOrEndCoords: (type: 'start' | 'end', newCoords: tCoords) => void;
 }
 
 interface IStyledProps {
@@ -14,9 +16,30 @@ interface IStyledProps {
   columns: number;
 }
 
-export function Grid({ rows, columns, startPoint, endPoint }: IGridProps) {
+export function Grid({
+  rows,
+  columns,
+  startPoint,
+  endPoint,
+  setStartOrEndCoords,
+}: IGridProps) {
+  const [currentDragTarget, setCurrentDragTarget] = useState<
+    'start' | 'end' | null
+  >(null);
+
   const rowsMapper = Array(rows).fill(null);
   const columnsMapper = Array(columns).fill(null);
+
+  function handleDrop(newCoords: tCoords) {
+    if (currentDragTarget) {
+      setStartOrEndCoords(currentDragTarget, newCoords);
+    }
+    setCurrentDragTarget(null);
+  }
+
+  function handleDrag(type: 'start' | 'end') {
+    setCurrentDragTarget(type);
+  }
 
   return (
     <StyledGrid columns={columns} rows={rows}>
@@ -27,6 +50,9 @@ export function Grid({ rows, columns, startPoint, endPoint }: IGridProps) {
             isEndPoint={columnI === endPoint[0] && rowI === endPoint[1]}
             width={` ${(1 / columns) * 100}%`}
             height={`${(1 / rows) * 100}%`}
+            coords={[columnI, rowI]}
+            handleDrop={handleDrop}
+            handleDrag={handleDrag}
           />
         ))
       )}

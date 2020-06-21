@@ -1,30 +1,79 @@
 import React from 'react';
 import styled from 'styled-components';
+import { tCoords } from './PathFinder';
+
+// type: 'start' | 'end',
 interface ICellProps {
   width: number | string;
   height: number | string;
   isStartPoint: boolean;
   isEndPoint: boolean;
+  coords: [number, number];
+  handleDrop: (newCoords: tCoords) => void;
+  handleDrag: (type: 'start' | 'end') => void;
+}
+interface IMarkerProps {
+  color: string;
+  onDragStart: () => void;
 }
 
 export function Cell(props: ICellProps) {
-  console.log(props);
-  return <StyledCell {...props} />;
+  const { isStartPoint, isEndPoint, handleDrop, coords, handleDrag } = props;
+  const isDraggable = isStartPoint || isEndPoint;
+
+  function handleDragDrop() {
+    handleDrop(coords);
+  }
+
+  return (
+    <StyledCell
+      {...props}
+      onDragOver={(event) => {
+        event.preventDefault();
+      }}
+      onDrop={handleDragDrop}
+    >
+      {isStartPoint ? (
+        <Marker color="green" onDragStart={() => handleDrag('start')} />
+      ) : null}
+      {isEndPoint ? (
+        <Marker color="red" onDragStart={() => handleDrag('end')} />
+      ) : null}
+    </StyledCell>
+  );
 }
 
 const StyledCell = styled.div<ICellProps>`
   width: ${({ width }) => width};
   height: ${({ height }) => height};
   background-color: ${({ isStartPoint, isEndPoint }) => {
-    if (isStartPoint) {
-      return 'green';
-    } else if (isEndPoint) {
-      return 'red';
-    } else {
-      return 'white';
-    }
+    // if (isStartPoint) {
+    //   return 'green';
+    // } else if (isEndPoint) {
+    //   return 'red';
+    // } else {
+    //   return 'white';
+    // }
+    return '';
   }};
 
   box-sizing: border-box;
   border: 1px solid black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+function Marker(props: IMarkerProps) {
+  const { color, onDragStart } = props;
+  return (
+    <StyledMarker color={color} draggable={true} onDragStart={onDragStart} />
+  );
+}
+
+const StyledMarker = styled.div<IMarkerProps>`
+  width: 70%;
+  height: 70%;
+  border-radius: 100%;
+  background-color: ${({ color }) => color};
 `;
