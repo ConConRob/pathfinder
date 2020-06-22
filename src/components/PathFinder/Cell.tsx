@@ -1,6 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 import { tCoords } from './PathFinder';
+import { CELL_DELAY_TIME_MS } from '../../constants';
 
 // type: 'start' | 'end',
 interface ICellProps {
@@ -8,11 +9,15 @@ interface ICellProps {
   height: number | string;
   isStartPoint: boolean;
   isEndPoint: boolean;
+  isWall: boolean;
   coords: [number, number];
   handleDrop: (newCoords: tCoords) => void;
   handleDrag: (type: 'start' | 'end') => void;
   isVisited: boolean;
   visitNumber: number;
+  onClick: () => void;
+  onMouseEnter: () => void;
+  pathNumber: number;
 }
 interface IMarkerProps {
   color: string;
@@ -58,13 +63,32 @@ export function Cell(props: ICellProps) {
 const StyledCell = styled.div<ICellProps>`
   width: ${({ width }) => width};
   height: ${({ height }) => height};
+  /* FOR IF VISITED TIMING */
   transition-delay: ${({ visitNumber }) =>
-    visitNumber !== -1 ? visitNumber / 50 : 0}s;
-  background-color: ${({ isStartPoint, isEndPoint, isVisited }) => {
+    visitNumber !== -1 ? visitNumber * CELL_DELAY_TIME_MS : 0}ms;
+    /* FOR IF PATH TIME */
+    ${({ pathNumber }) => {
+      if (pathNumber !== -1) {
+        return `transition-delay: ${pathNumber * CELL_DELAY_TIME_MS}ms;`;
+      }
+      return '';
+    }}
+  background-color: ${({
+    isStartPoint,
+    isEndPoint,
+    isVisited,
+    isWall,
+    visitNumber,
+    pathNumber,
+  }) => {
     // if (!isStartPoint && !isEndPoint && isVisited) {
     //   return 'yellow';
     // }
-    if (isVisited) {
+    if (isWall) {
+      return 'black';
+    } else if (pathNumber !== -1) {
+      return 'blue';
+    } else if (visitNumber !== -1) {
       return 'yellow';
     }
     return 'white';

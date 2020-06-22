@@ -1,18 +1,25 @@
 import { MinHeap, Graph } from '../dataStructures';
+interface IVertex {
+  vertexId: string;
+  fromVertexId?: string;
+}
 export function dijkstras(startId: string, endId: string, graph: Graph) {
-  const heap = new MinHeap<{ vertexId: string; fromVertexId?: string }>();
+  const heap = new MinHeap<IVertex>();
   const visits: string[] = [];
+
+  const visitedToFrom: any = {}; //{[key: string]: string}
 
   heap.add({ value: 0, payload: { vertexId: startId } });
 
   while (heap.size > 0) {
     const currentVertex = heap.poll();
-    const currentVertexId = currentVertex.payload.vertexId;
+    const currentVertexId: string = currentVertex.payload.vertexId;
     visits.push(currentVertexId);
+
+    visitedToFrom[currentVertexId] = currentVertex.payload.fromVertexId;
     if (currentVertexId === endId) {
       break;
     }
-    console.log(currentVertex.value);
     // loop over edges calculating new value and adding to the heap
     const edges = graph.getVertexEdges(currentVertexId);
     for (let edge of edges) {
@@ -36,5 +43,14 @@ export function dijkstras(startId: string, endId: string, graph: Graph) {
       }
     }
   }
-  return { path: [], visits };
+
+  let lastId = visits[visits.length - 1];
+
+  const path: string[] = [];
+
+  while (lastId) {
+    path.unshift(lastId);
+    lastId = visitedToFrom[lastId];
+  }
+  return { path, visits };
 }
