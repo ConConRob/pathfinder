@@ -12,6 +12,7 @@ interface ICellProps {
   handleDrop: (newCoords: tCoords) => void;
   handleDrag: (type: 'start' | 'end') => void;
   isVisited: boolean;
+  visitNumber: number;
 }
 interface IMarkerProps {
   color: string;
@@ -19,6 +20,7 @@ interface IMarkerProps {
 }
 
 export const MemoizedCell = React.memo(Cell);
+
 export function Cell(props: ICellProps) {
   const {
     isStartPoint,
@@ -27,6 +29,7 @@ export function Cell(props: ICellProps) {
     coords,
     handleDrag,
     isVisited,
+    visitNumber,
   } = props;
   const isDraggable = isStartPoint || isEndPoint;
 
@@ -55,6 +58,8 @@ export function Cell(props: ICellProps) {
 const StyledCell = styled.div<ICellProps>`
   width: ${({ width }) => width};
   height: ${({ height }) => height};
+  transition-delay: ${({ visitNumber }) =>
+    visitNumber !== -1 ? visitNumber / 50 : 0}s;
   background-color: ${({ isStartPoint, isEndPoint, isVisited }) => {
     // if (!isStartPoint && !isEndPoint && isVisited) {
     //   return 'yellow';
@@ -62,9 +67,10 @@ const StyledCell = styled.div<ICellProps>`
     if (isVisited) {
       return 'yellow';
     }
-    return '';
+    return 'white';
   }};
 
+  transition-duration: ${(isVisited) => (isVisited ? 0.2 : 0)}s;
   box-sizing: border-box;
   border: 1px solid black;
   display: flex;

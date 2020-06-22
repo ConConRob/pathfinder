@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { MemoizedCell } from './Cell';
+import { MemoizedCell, Cell } from './Cell';
 import styled from 'styled-components';
 import { tCoords } from './PathFinder';
+import { generateId } from '../../util';
 
 interface IGridProps {
   rows: number;
@@ -47,7 +48,7 @@ export function Grid({
     <StyledGrid columns={columns} rows={rows}>
       {rowsMapper.map((_, rowI) =>
         columnsMapper.map((_, columnI) => (
-          <MemoizedCell
+          <Cell
             key={`${columnI}.${rowI}`}
             isStartPoint={columnI === startPoint[0] && rowI === startPoint[1]}
             isEndPoint={columnI === endPoint[0] && rowI === endPoint[1]}
@@ -56,6 +57,9 @@ export function Grid({
                 (coord) => coord[0] === columnI && coord[1] === rowI
               )
             }
+            visitNumber={visitedCoords.findIndex(
+              (coord) => coord[0] === columnI && coord[1] === rowI
+            )}
             width={` ${(1 / columns) * 100}%`}
             height={`${(1 / rows) * 100}%`}
             coords={[columnI, rowI]}

@@ -6,9 +6,13 @@ import { generateId } from '../../util';
 export type tCoords = [number, number];
 
 export function PathFinder() {
+  const [dimensions, setDimensions] = useState<tCoords>([20, 20]);
   const [startCoords, setStartCoords] = useState<tCoords>([1, 1]);
   const [endCoords, setEndCoords] = useState<tCoords>([3, 3]);
-  const [dimensions, setDimensions] = useState<tCoords>([30, 30]);
+  const [walls, setWalls] = useState<tCoords>([]);
+
+  const [isMouseDown, setIsMouseDown] = useState(false);
+
   const [visitedCoords, setVisitedCoords] = useState<tCoords[]>([]);
   function setStartOrEndCoords(type: 'start' | 'end', newCoords: tCoords) {
     if (type === 'start') {
@@ -20,6 +24,7 @@ export function PathFinder() {
 
   function runPathFinder() {
     setVisitedCoords([]);
+    debugger;
     const graph = generateGraph();
     const raw = dijkstras(
       generateId(...startCoords),
@@ -29,13 +34,14 @@ export function PathFinder() {
     const coordsVisited: any = raw.visits.map((visit) =>
       visit.split('.').map((string) => Number.parseInt(string))
     );
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i === coordsVisited.length) {
-        window.clearInterval(interval);
-      }
-      setVisitedCoords(coordsVisited.slice(0, i++));
-    }, 20);
+    setVisitedCoords(coordsVisited);
+    // let i = 0;
+    // const interval = setInterval(() => {
+    //   if (i === coordsVisited.length) {
+    //     window.clearInterval(interval);
+    //   }
+    //   setVisitedCoords(coordsVisited.slice(0, i++));
+    // }, 30);
   }
 
   function generateGraph(): Graph {
@@ -77,6 +83,7 @@ export function PathFinder() {
   return (
     <>
       <button onClick={runPathFinder}>RUN PATH FINDER</button>
+      <button onClick={() => setVisitedCoords([])}>RESET</button>
       <Grid
         rows={dimensions[1]}
         columns={dimensions[0]}
