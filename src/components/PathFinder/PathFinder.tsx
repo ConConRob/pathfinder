@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { Grid } from './Grid';
 import { Graph } from '../../dataStructures';
+import { dijkstras } from '../../pathfinders';
+import { generateId } from '../../util';
 export type tCoords = [number, number];
 
 export function PathFinder() {
   const [startCoords, setStartCoords] = useState<tCoords>([1, 1]);
   const [endCoords, setEndCoords] = useState<tCoords>([3, 3]);
-  const [dimensions, setDimensions] = useState<tCoords>([5, 5]);
-
+  const [dimensions, setDimensions] = useState<tCoords>([30, 30]);
+  const [visitedCoords, setVisitedCoords] = useState<tCoords[]>([]);
   function setStartOrEndCoords(type: 'start' | 'end', newCoords: tCoords) {
     if (type === 'start') {
       setStartCoords(newCoords);
@@ -17,16 +19,28 @@ export function PathFinder() {
   }
 
   function runPathFinder() {
+    setVisitedCoords([]);
     const graph = generateGraph();
-    console.log(graph);
+    const raw = dijkstras(
+      generateId(...startCoords),
+      generateId(...endCoords),
+      graph
+    );
+    const coordsVisited: any = raw.visits.map((visit) =>
+      visit.split('.').map((string) => Number.parseInt(string))
+    );
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i === coordsVisited.length) {
+        window.clearInterval(interval);
+      }
+      setVisitedCoords(coordsVisited.slice(0, i++));
+    }, 20);
   }
 
   function generateGraph(): Graph {
     const graph = new Graph();
 
-    function generateId(x: number, y: number): string {
-      return `${x}.${y}`;
-    }
     // add vertices
     for (let x = 0; x < dimensions[0]; x++) {
       for (let y = 0; y < dimensions[1]; y++) {
@@ -69,6 +83,7 @@ export function PathFinder() {
         startPoint={startCoords}
         endPoint={endCoords}
         setStartOrEndCoords={setStartOrEndCoords}
+        visitedCoords={visitedCoords}
       />
     </>
   );

@@ -17,7 +17,7 @@ export class MinHeap<T> {
     return 2 * index + 2;
   }
   private getParentIndex(index: number): number {
-    return (index - 1) / 2;
+    return Math.floor((index - 1) / 2);
   }
 
   private hasLeftChild(index: number): boolean {
@@ -46,8 +46,7 @@ export class MinHeap<T> {
     this.items[indexTwo] = temp;
   }
 
-  private bubbleDown() {
-    let index = this.size - 1;
+  private bubbleUp(index = this.size - 1) {
     while (
       this.hasParent(index) &&
       this.parent(index).value > this.items[index].value
@@ -57,8 +56,7 @@ export class MinHeap<T> {
     }
   }
 
-  private bubbleUp() {
-    let index = 0;
+  private bubbleDown(index = 0) {
     while (this.hasLeftChild(index)) {
       let smallerChildIndex = this.getLeftChildIndex(index);
       if (
@@ -85,7 +83,10 @@ export class MinHeap<T> {
   public poll(): INode<T> {
     if (this.size === 0) throw new Error('Heep is empty');
     const item = this.items[0];
-    this.items[0] = this.items[this.size - 1];
+
+    const lastItem = this.items.pop();
+    if (lastItem && item !== lastItem) this.items[0] = lastItem;
+
     this.size--;
     this.bubbleDown();
     return item;
@@ -95,5 +96,24 @@ export class MinHeap<T> {
     this.items[this.size] = node;
     this.size++;
     this.bubbleUp();
+  }
+
+  public getByProperty(property: keyof T, propertyValue: any) {
+    const item = this.items.find(
+      (item) => item.payload[property] === propertyValue
+    );
+    return item;
+  }
+
+  public updateValueByProperty(
+    property: keyof T,
+    propertyValue: any,
+    newValue: number
+  ) {
+    const index = this.items.findIndex(
+      (item) => item.payload[property] === propertyValue
+    );
+    this.items[index].value = newValue;
+    this.bubbleUp(index);
   }
 }

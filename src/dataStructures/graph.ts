@@ -23,6 +23,11 @@ export class Graph {
     }
     this.vertices[fromId].addEdge(toId, this.vertices[toId], weight);
   }
+
+  public getVertexEdges(id: string) {
+    if (!this.hasVertex(id)) throw new Error('Vertex does not exist');
+    return this.vertices[id].edges;
+  }
 }
 
 class Vertex {
