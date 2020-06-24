@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Grid } from './Grid';
 import { Graph } from '../../dataStructures';
 import { dijkstras } from '../../pathfinders';
@@ -7,14 +7,44 @@ import { CELL_DELAY_TIME_MS } from '../../constants';
 
 export type tCoords = [number, number];
 
+export enum DisplayType {
+  Path = 'path',
+  Visit = 'visit',
+  UndoVisit = 'undo visit',
+  Untouched = 'untouched',
+}
+export interface IDisplayCommand {
+  command: DisplayType;
+  coords: tCoords[];
+}
+
 export function PathFinder() {
   const [dimensions, setDimensions] = useState<tCoords>([20, 20]);
   const [startCoords, setStartCoords] = useState<tCoords>([1, 1]);
   const [endCoords, setEndCoords] = useState<tCoords>([3, 3]);
   const [walls, setWalls] = useState<tCoords[]>([]);
 
-  const [visitedCoords, setVisitedCoords] = useState<tCoords[]>([]);
-  const [quickestPath, setQuickestPath] = useState<tCoords[]>([]);
+  const [displayCommands, setDisplayCommands] = useState<IDisplayCommand[]>([]);
+  const [currentDisplayCommandIndex, setCurrentDisplayCommandIndex] = useState<
+    number | null
+  >(null);
+
+  useEffect(() => {
+    if (displayCommands.length === 0) {
+      setCurrentDisplayCommandIndex(null);
+    } else {
+      setCurrentDisplayCommandIndex(0);
+    }
+  }, [displayCommands]);
+
+  function nextCommand() {
+    if (
+      currentDisplayCommandIndex !== null &&
+      displayCommands.length - 1 > currentDisplayCommandIndex
+    ) {
+      setCurrentDisplayCommandIndex(currentDisplayCommandIndex + 1);
+    }
+  }
 
   function setStartOrEndCoords(type: 'start' | 'end', newCoords: tCoords) {
     if (type === 'start') {
@@ -23,9 +53,11 @@ export function PathFinder() {
       setEndCoords(newCoords);
     }
   }
+
   function isWall(coord: tCoords) {
     return !!walls.find((wall) => wall[0] === coord[0] && wall[1] === coord[1]);
   }
+
   function toggleGraphItem(coord: tCoords) {
     if (!isWall(coord)) {
       // add the wall
@@ -41,7 +73,7 @@ export function PathFinder() {
   }
 
   function runPathFinder() {
-    setVisitedCoords([]);
+    setDisplayCommands([]);
     const graph = generateGraph();
     const raw = dijkstras(
       generateId(...startCoords),
@@ -54,12 +86,11 @@ export function PathFinder() {
     const path: any = raw.path.map((path) =>
       path.split('.').map((string) => Number.parseInt(string))
     );
-    setVisitedCoords(coordsVisited);
 
-    setTimeout(() => {
-      setQuickestPath(path);
-      // look at using transition end event
-    }, (coordsVisited.length + 25) * CELL_DELAY_TIME_MS);
+    setDisplayCommands([
+      { command: DisplayType.Visit, coords: coordsVisited.slice(0, -1) },
+      { command: DisplayType.Path, coords: path },
+    ]);
   }
 
   function generateGraph(): Graph {
@@ -99,13 +130,18 @@ export function PathFinder() {
     return graph;
   }
 
+  const displayCommand =
+    currentDisplayCommandIndex !== null
+      ? displayCommands[currentDisplayCommandIndex]
+      : null;
+  console.log(displayCommand);
   return (
     <>
       <button onClick={runPathFinder}>RUN PATH FINDER</button>
       <button
         onClick={() => {
-          setVisitedCoords([]);
-          setWalls([]);
+          setDisplayCommands([]);
+          // setWalls([]);
         }}
       >
         RESET
@@ -116,10 +152,10 @@ export function PathFinder() {
         startPoint={startCoords}
         endPoint={endCoords}
         setStartOrEndCoords={setStartOrEndCoords}
-        visitedCoords={visitedCoords}
         toggleGraphItem={toggleGraphItem}
         walls={walls}
-        quickestPath={quickestPath}
+        displayCommand={displayCommand}
+        nextCommand={nextCommand}
       />
     </>
   );

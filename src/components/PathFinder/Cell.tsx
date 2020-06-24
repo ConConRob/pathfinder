@@ -1,6 +1,6 @@
 import React from 'react';
 import styled from 'styled-components';
-import { tCoords } from './PathFinder';
+import { tCoords, DisplayType } from './PathFinder';
 import { CELL_DELAY_TIME_MS } from '../../constants';
 
 // type: 'start' | 'end',
@@ -13,11 +13,13 @@ interface ICellProps {
   coords: [number, number];
   handleDrop: (newCoords: tCoords) => void;
   handleDrag: (type: 'start' | 'end') => void;
-  isVisited: boolean;
-  visitNumber: number;
   onClick: () => void;
   onMouseEnter: () => void;
-  pathNumber: number;
+  isLastCommand: boolean;
+  // runNextCommand: () => void;
+  displayNumber: number | undefined;
+  displayType: DisplayType | undefined;
+  nextCommand: () => void;
 }
 interface IMarkerProps {
   color: string;
@@ -33,29 +35,38 @@ export function Cell(props: ICellProps) {
     handleDrop,
     coords,
     handleDrag,
-    isVisited,
-    visitNumber,
+    displayType,
+    isLastCommand,
+    nextCommand,
+    displayNumber,
   } = props;
-  const isDraggable = isStartPoint || isEndPoint;
 
   function handleDragDrop() {
     handleDrop(coords);
   }
+  const animationEnd = isLastCommand || undefined;
 
+  function handleLastAnimation(event: React.AnimationEvent<HTMLDivElement>) {
+    nextCommand();
+  }
   return (
     <StyledCell
+      onAnimationEnd={animationEnd && handleLastAnimation}
+      className="item"
       {...props}
       onDragOver={(event) => {
         event.preventDefault();
       }}
       onDrop={handleDragDrop}
     >
+      {}
       {isStartPoint ? (
         <Marker color="green" onDragStart={() => handleDrag('start')} />
       ) : null}
       {isEndPoint ? (
         <Marker color="red" onDragStart={() => handleDrag('end')} />
       ) : null}
+      {isStartPoint || isEndPoint ? null : <div className="item"></div>}
     </StyledCell>
   );
 }
@@ -64,39 +75,91 @@ const StyledCell = styled.div<ICellProps>`
   width: ${({ width }) => width};
   height: ${({ height }) => height};
   /* FOR IF VISITED TIMING */
-  transition-delay: ${({ visitNumber }) =>
-    visitNumber !== -1 ? visitNumber * CELL_DELAY_TIME_MS : 0}ms;
-    /* FOR IF PATH TIME */
-    ${({ pathNumber }) => {
-      if (pathNumber !== -1) {
-        return `transition-delay: ${pathNumber * CELL_DELAY_TIME_MS}ms;`;
-      }
-      return '';
-    }}
-  background-color: ${({
-    isStartPoint,
-    isEndPoint,
-    isVisited,
-    isWall,
-    visitNumber,
-    pathNumber,
-  }) => {
-    // if (!isStartPoint && !isEndPoint && isVisited) {
-    //   return 'yellow';
-    // }
+
+  /* FOR IF PATH TIME */
+  background-color: ${({ isWall }) => {
     if (isWall) {
       return 'black';
-    } else if (pathNumber !== -1) {
-      return 'blue';
-    } else if (visitNumber !== -1) {
-      return 'yellow';
     }
     return 'white';
   }};
 
-  transition-duration: ${(isVisited) => (isVisited ? 0.2 : 0)}s;
+  /* VISIT PATH */
+  @keyframes visited {
+    from {
+      background-color: white;
+      border-radius: 100%;
+      width: 0;
+      height: 0;
+    }
+    25% {
+      background-color: yellow;
+      border-radius: 100%;
+      width: 50%;
+      height: 50%;
+    }
+    55% {
+      background-color: yellow;
+      border-radius: 100%;
+    }
+    90% {
+      background-color: orange;
+    }
+    to {
+      background-color: red;
+      border-radius: 5px;
+      width: 100%;
+      height: 100%;
+    }
+  }
+  .item {
+    /* DEFAULT VALUES */
+    width: 100%;
+    height: 100%;
+    border-radius: 5px;
+    /* HANDLE TIMING */
+    /* transition-delay: 100ms;
+    animation-delay: 100ms; */
+    /* animation-direction: reverse; */
+
+    ${({ displayType, displayNumber }) => {
+      // VISIT TIMING
+
+      switch (displayType) {
+        case DisplayType.Path: {
+          return `
+          transition-delay: ${(displayNumber || 0) * CELL_DELAY_TIME_MS}ms;
+          animation-delay: ${(displayNumber || 0) * CELL_DELAY_TIME_MS}ms;
+          background-color: blue;
+          `;
+        }
+        case DisplayType.Visit: {
+          debugger;
+          return `
+          animation: visited;
+          transition-delay: ${(displayNumber || 0) * CELL_DELAY_TIME_MS}ms;
+          animation-delay: ${(displayNumber || 0) * CELL_DELAY_TIME_MS}ms;
+          background-color:red;
+          animation-duration: .5s;
+          `;
+        }
+        case DisplayType.UndoVisit: {
+          return `animation: visited;
+          animation-direction:reverse;
+          transition-delay: ${(displayNumber || 0) * CELL_DELAY_TIME_MS}ms;
+          animation-delay: ${(displayNumber || 0) * CELL_DELAY_TIME_MS}ms;
+          animation-duration: .5s;
+          `;
+        }
+        default:
+          return ``;
+      }
+    }}
+  }
   box-sizing: border-box;
-  border: 1px solid black;
+
+  border: 1px solid rgba(0, 0, 0, 0.1);
+
   display: flex;
   justify-content: center;
   align-items: center;

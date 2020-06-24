@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Cell } from './Cell';
 import styled from 'styled-components';
-import { tCoords } from './PathFinder';
+import { tCoords, IDisplayCommand, DisplayType } from './PathFinder';
 import { generateId } from '../../util';
 import { useIsMouseDown } from '../../hooks';
 
@@ -10,11 +10,11 @@ interface IGridProps {
   columns: number;
   startPoint: tCoords;
   endPoint: tCoords;
-  visitedCoords: tCoords[];
   walls: tCoords[];
-  quickestPath: tCoords[];
+  displayCommand: IDisplayCommand | null;
   setStartOrEndCoords: (type: 'start' | 'end', newCoords: tCoords) => void;
   toggleGraphItem: (coords: tCoords) => void;
+  nextCommand: () => void;
 }
 
 interface IStyledProps {
@@ -28,19 +28,44 @@ export function Grid({
   startPoint,
   endPoint,
   setStartOrEndCoords,
-  visitedCoords,
-  quickestPath,
   toggleGraphItem,
   walls,
+  displayCommand,
+  nextCommand,
 }: IGridProps) {
   const [currentDragTarget, setCurrentDragTarget] = useState<
     'start' | 'end' | null
   >(null);
 
+  const [maintainedCommands, setMaintainedCommands] = useState<
+    IDisplayCommand[]
+  >([]);
+  useEffect(() => {
+    if (displayCommand) {
+      setMaintainedCommands((c) => [displayCommand, ...c]);
+    }
+  }, [displayCommand]);
+
   const rowsMapper = Array(rows).fill(null);
   const columnsMapper = Array(columns).fill(null);
 
   const isMouseDown = useIsMouseDown();
+
+  function findLastMaintainedCommand(x: number, y: number) {
+    for (let maintainedCommand of maintainedCommands) {
+      const index = maintainedCommand.coords.findIndex((coord) => {
+        return coord[0] === x && coord[1] === y;
+      });
+
+      if (index !== -1) {
+        return {
+          index,
+          coord: maintainedCommand.coords[index],
+          command: maintainedCommand.command,
+        };
+      }
+    }
+  }
 
   function handleEnterCell(coords: tCoords) {
     if (isMouseDown) {
@@ -71,20 +96,29 @@ export function Grid({
             key={generateId(columnI, rowI)}
             isStartPoint={columnI === startPoint[0] && rowI === startPoint[1]}
             isEndPoint={columnI === endPoint[0] && rowI === endPoint[1]}
-            isVisited={
-              !!visitedCoords.find(
-                (coord) => coord[0] === columnI && coord[1] === rowI
-              )
-            }
             isWall={
               !!walls.find((coord) => coord[0] === columnI && coord[1] === rowI)
             }
-            visitNumber={visitedCoords.findIndex(
-              (coord) => coord[0] === columnI && coord[1] === rowI
-            )}
-            pathNumber={quickestPath.findIndex(
-              (coord) => coord[0] === columnI && coord[1] === rowI
-            )}
+            displayType={
+              findLastMaintainedCommand(columnI, rowI)
+                ? findLastMaintainedCommand(columnI, rowI)?.command
+                : DisplayType.Untouched
+            }
+            displayNumber={
+              findLastMaintainedCommand(columnI, rowI)
+                ? findLastMaintainedCommand(columnI, rowI)?.index
+                : -1
+            }
+            isLastCommand={
+              maintainedCommands[0]
+                ? maintainedCommands[0].coords[
+                    maintainedCommands[0].coords.length - 1
+                  ][0] === columnI &&
+                  maintainedCommands[0].coords[
+                    maintainedCommands[0].coords.length - 1
+                  ][1] === rowI
+                : false
+            }
             width={` ${(1 / columns) * 100}%`}
             height={`${(1 / rows) * 100}%`}
             coords={[columnI, rowI]}
@@ -92,6 +126,7 @@ export function Grid({
             handleDrag={handleDrag}
             onClick={() => handleClickCell([columnI, rowI])}
             onMouseEnter={() => handleEnterCell([columnI, rowI])}
+            nextCommand={nextCommand}
           />
         ))
       )}
@@ -104,5 +139,5 @@ const StyledGrid = styled.div<IStyledProps>`
   display: flex;
   flex-wrap: wrap;
   height: 700px;
-  width: 100%;
+  width: 700px;
 `;
