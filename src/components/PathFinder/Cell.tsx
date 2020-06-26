@@ -1,7 +1,12 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { tCoords, DisplayType } from './PathFinder';
-import { CELL_DELAY_TIME_MS } from '../../constants';
+import {
+  CELL_DELAY_DRAW_PATH_STROKE_TIME_MS,
+  CELL_DELAY_DRAW_VISIT_STROKE_TIME_MS,
+} from '../../constants';
+
+// make saved last state happen at this level
 
 // type: 'start' | 'end',
 interface ICellProps {
@@ -15,11 +20,15 @@ interface ICellProps {
   handleDrag: (type: 'start' | 'end') => void;
   onClick: () => void;
   onMouseEnter: () => void;
-  isLastCommand: boolean;
-  // runNextCommand: () => void;
-  displayNumber: number | undefined;
-  displayType: DisplayType | undefined;
   nextCommand: () => void;
+  command?: ICellCommand;
+  isLastCommand?: boolean;
+}
+
+export interface ICellCommand {
+  displayType: DisplayType;
+  displayNumber: number;
+  isRememberLast?: boolean;
 }
 interface IMarkerProps {
   color: string;
@@ -28,6 +37,7 @@ interface IMarkerProps {
 
 export const MemoizedCell = React.memo(Cell);
 
+let oldCommands: (ICellCommand | undefined)[] = [];
 export function Cell(props: ICellProps) {
   const {
     isStartPoint,
@@ -35,11 +45,44 @@ export function Cell(props: ICellProps) {
     handleDrop,
     coords,
     handleDrag,
-    displayType,
-    isLastCommand,
     nextCommand,
-    displayNumber,
+    command,
+    isLastCommand,
   } = props;
+
+  // const [oldCommands, setOldCommands] = useState<(ICellCommand | undefined)[]>(
+  //   []
+  // );
+  // useEffect(() => {
+  //   const oc = oldCommands[0];
+  //   const c = command;
+  //   if (
+  //     oc?.displayNumber !== c?.displayNumber &&
+  //     oc?.displayType !== c?.displayType &&
+  //     oc?.isRememberLast !== c?.isRememberLast
+  //   ) {
+  //     setOldCommands([command, ...oldCommands]);
+  //   }
+  // }, [command]);
+
+  const oc = oldCommands.length === 0 ? undefined : oldCommands[0];
+
+  const c = command;
+  if (
+    oc?.displayNumber !== c?.displayNumber &&
+    oc?.displayType !== c?.displayType &&
+    oc?.isRememberLast !== c?.isRememberLast
+  ) {
+    oldCommands.unshift(command);
+  }
+  let useCommand = command;
+  if (
+    command?.displayType === DisplayType.Untouched &&
+    command.isRememberLast
+  ) {
+    if (oldCommands.length === 1) useCommand = oldCommands[0];
+    else if (oldCommands.length === 2) useCommand = oldCommands[1];
+  }
 
   function handleDragDrop() {
     handleDrop(coords);
@@ -54,6 +97,7 @@ export function Cell(props: ICellProps) {
       onAnimationEnd={animationEnd && handleLastAnimation}
       className="item"
       {...props}
+      command={useCommand}
       onDragOver={(event) => {
         event.preventDefault();
       }}
@@ -122,38 +166,52 @@ const StyledCell = styled.div<ICellProps>`
     animation-delay: 100ms; */
     /* animation-direction: reverse; */
 
-    ${({ displayType, displayNumber }) => {
+    ${({ command }) => {
       // VISIT TIMING
-
-      switch (displayType) {
-        case DisplayType.Path: {
-          return `
-          transition-delay: ${(displayNumber || 0) * CELL_DELAY_TIME_MS}ms;
-          animation-delay: ${(displayNumber || 0) * CELL_DELAY_TIME_MS}ms;
+      if (command) {
+        const { displayType, displayNumber } = command;
+        switch (displayType) {
+          case DisplayType.Path: {
+            return `
+          transition-delay: ${
+            (displayNumber || 0) * CELL_DELAY_DRAW_PATH_STROKE_TIME_MS
+          }ms;
+          animation-delay: ${
+            (displayNumber || 0) * CELL_DELAY_DRAW_PATH_STROKE_TIME_MS
+          }ms;
           background-color: blue;
           `;
-        }
-        case DisplayType.Visit: {
-          debugger;
-          return `
+          }
+          case DisplayType.Visit: {
+            return `
           animation: visited;
-          transition-delay: ${(displayNumber || 0) * CELL_DELAY_TIME_MS}ms;
-          animation-delay: ${(displayNumber || 0) * CELL_DELAY_TIME_MS}ms;
+          transition-delay: ${
+            (displayNumber || 0) * CELL_DELAY_DRAW_VISIT_STROKE_TIME_MS
+          }ms;
+          animation-delay: ${
+            (displayNumber || 0) * CELL_DELAY_DRAW_VISIT_STROKE_TIME_MS
+          }ms;
           background-color:red;
           animation-duration: .5s;
           `;
-        }
-        case DisplayType.UndoVisit: {
-          return `animation: visited;
+          }
+          case DisplayType.UndoVisit: {
+            return `animation: visited;
           animation-direction:reverse;
-          transition-delay: ${(displayNumber || 0) * CELL_DELAY_TIME_MS}ms;
-          animation-delay: ${(displayNumber || 0) * CELL_DELAY_TIME_MS}ms;
+          transition-delay: ${
+            (displayNumber || 0) * CELL_DELAY_DRAW_VISIT_STROKE_TIME_MS
+          }ms;
+          animation-delay: ${
+            (displayNumber || 0) * CELL_DELAY_DRAW_VISIT_STROKE_TIME_MS
+          }ms;
           animation-duration: .5s;
           `;
+          }
+          default:
+            return ``;
         }
-        default:
-          return ``;
       }
+      return '';
     }}
   }
   box-sizing: border-box;

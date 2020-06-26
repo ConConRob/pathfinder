@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Cell } from './Cell';
+import { Cell, ICellCommand } from './Cell';
 import styled from 'styled-components';
 import { tCoords, IDisplayCommand, DisplayType } from './PathFinder';
 import { generateId } from '../../util';
@@ -37,34 +37,32 @@ export function Grid({
     'start' | 'end' | null
   >(null);
 
-  const [maintainedCommands, setMaintainedCommands] = useState<
-    IDisplayCommand[]
-  >([]);
-  useEffect(() => {
-    if (displayCommand) {
-      setMaintainedCommands((c) => [displayCommand, ...c]);
-    }
-  }, [displayCommand]);
-
   const rowsMapper = Array(rows).fill(null);
   const columnsMapper = Array(columns).fill(null);
 
   const isMouseDown = useIsMouseDown();
 
-  function findLastMaintainedCommand(x: number, y: number) {
-    for (let maintainedCommand of maintainedCommands) {
-      const index = maintainedCommand.coords.findIndex((coord) => {
-        return coord[0] === x && coord[1] === y;
-      });
+  function findAndFormatCellCommand(
+    x: number,
+    y: number
+  ): ICellCommand | undefined {
+    if (!displayCommand) return;
+    const index = displayCommand.coords.findIndex((coord) => {
+      return coord[0] === x && coord[1] === y;
+    });
 
-      if (index !== -1) {
-        return {
-          index,
-          coord: maintainedCommand.coords[index],
-          command: maintainedCommand.command,
-        };
-      }
-    }
+    if (index === -1)
+      return {
+        displayNumber: -1,
+        displayType: DisplayType.Untouched,
+        isRememberLast: displayCommand.isRememberLast,
+      };
+
+    return {
+      displayNumber: index,
+      displayType: displayCommand.command,
+      isRememberLast: displayCommand.isRememberLast,
+    };
   }
 
   function handleEnterCell(coords: tCoords) {
@@ -99,24 +97,13 @@ export function Grid({
             isWall={
               !!walls.find((coord) => coord[0] === columnI && coord[1] === rowI)
             }
-            displayType={
-              findLastMaintainedCommand(columnI, rowI)
-                ? findLastMaintainedCommand(columnI, rowI)?.command
-                : DisplayType.Untouched
-            }
-            displayNumber={
-              findLastMaintainedCommand(columnI, rowI)
-                ? findLastMaintainedCommand(columnI, rowI)?.index
-                : -1
-            }
+            command={findAndFormatCellCommand(columnI, rowI)}
             isLastCommand={
-              maintainedCommands[0]
-                ? maintainedCommands[0].coords[
-                    maintainedCommands[0].coords.length - 1
-                  ][0] === columnI &&
-                  maintainedCommands[0].coords[
-                    maintainedCommands[0].coords.length - 1
-                  ][1] === rowI
+              displayCommand
+                ? displayCommand.coords[displayCommand.coords.length - 1][0] ===
+                    columnI &&
+                  displayCommand.coords[displayCommand.coords.length - 1][1] ===
+                    rowI
                 : false
             }
             width={` ${(1 / columns) * 100}%`}

@@ -3,7 +3,6 @@ import { Grid } from './Grid';
 import { Graph } from '../../dataStructures';
 import { dijkstras } from '../../pathfinders';
 import { generateId } from '../../util';
-import { CELL_DELAY_TIME_MS } from '../../constants';
 
 export type tCoords = [number, number];
 
@@ -16,6 +15,7 @@ export enum DisplayType {
 export interface IDisplayCommand {
   command: DisplayType;
   coords: tCoords[];
+  isRememberLast?: boolean;
 }
 
 export function PathFinder() {
@@ -88,8 +88,12 @@ export function PathFinder() {
     );
 
     setDisplayCommands([
-      { command: DisplayType.Visit, coords: coordsVisited.slice(0, -1) },
-      { command: DisplayType.Path, coords: path },
+      {
+        command: DisplayType.Visit,
+        coords: coordsVisited.slice(0, -1),
+        isRememberLast: false,
+      },
+      { command: DisplayType.Path, coords: path, isRememberLast: true },
     ]);
   }
 
@@ -134,7 +138,6 @@ export function PathFinder() {
     currentDisplayCommandIndex !== null
       ? displayCommands[currentDisplayCommandIndex]
       : null;
-  console.log(displayCommand);
   return (
     <>
       <button onClick={runPathFinder}>RUN PATH FINDER</button>
