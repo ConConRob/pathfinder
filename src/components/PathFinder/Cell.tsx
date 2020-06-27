@@ -32,7 +32,8 @@ export function Cell(props: ICellProps) {
     handleDrop,
     coords,
     handleDrag,
-
+    onClick,
+    onMouseEnter,
     isWall,
     height,
     width,
@@ -53,6 +54,8 @@ export function Cell(props: ICellProps) {
       width={width}
       data-x={coords[0]}
       data-y={coords[1]}
+      onMouseDown={onClick}
+      onMouseEnter={onMouseEnter}
     >
       {isStartPoint ? (
         <Marker color="green" onDragStart={() => handleDrag('start')} />
@@ -74,6 +77,7 @@ interface IStyledCellProps {
 const StyledCell = styled.div<IStyledCellProps>`
   width: ${({ width }) => width};
   height: ${({ height }) => height};
+  border-radius: 6px;
   /* FOR IF VISITED TIMING */
 
   /* FOR IF PATH TIME */
@@ -119,6 +123,7 @@ const StyledCell = styled.div<IStyledCellProps>`
     background-color: white;
 
     transition: background-color 0.5s;
+    ${({ isWall }) => (isWall ? 'background-color:black !important;' : '')}
     &.path {
       background-color: blue;
     }

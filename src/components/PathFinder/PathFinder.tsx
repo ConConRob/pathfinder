@@ -77,7 +77,7 @@ export function PathFinder() {
       .map((path) => path.split('.').map((string) => Number.parseInt(string)));
 
     const intervalCommands: IIntervalCommand[] = [
-      { coords: coordsVisited, class: 'visit', time: 10 },
+      { coords: coordsVisited, class: 'visit', time: 30 },
       { coords: path, class: 'path', time: 70 },
     ];
 

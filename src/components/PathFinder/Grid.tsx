@@ -40,6 +40,7 @@ export function Grid({
 
   function handleEnterCell(coords: tCoords) {
     if (isMouseDown) {
+      debugger;
       toggleGraphItem(coords);
     }
   }
