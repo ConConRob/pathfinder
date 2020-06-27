@@ -18,35 +18,22 @@ export interface IDisplayCommand {
   isRememberLast?: boolean;
 }
 
+interface IIntervalCommand {
+  coords: tCoords[];
+  class: string;
+  time: number;
+}
+
 export function PathFinder() {
-  const [dimensions, setDimensions] = useState<tCoords>([20, 20]);
+  const [dimensions, setDimensions] = useState<tCoords>([50, 25]);
   const [startCoords, setStartCoords] = useState<tCoords>([1, 1]);
   const [endCoords, setEndCoords] = useState<tCoords>([3, 3]);
   const [walls, setWalls] = useState<tCoords[]>([]);
-
-  const [displayCommands, setDisplayCommands] = useState<IDisplayCommand[]>([]);
-  const [currentDisplayCommandIndex, setCurrentDisplayCommandIndex] = useState<
-    number | null
-  >(null);
-
-  useEffect(() => {
-    if (displayCommands.length === 0) {
-      setCurrentDisplayCommandIndex(null);
-    } else {
-      setCurrentDisplayCommandIndex(0);
-    }
-  }, [displayCommands]);
-
-  function nextCommand() {
-    if (
-      currentDisplayCommandIndex !== null &&
-      displayCommands.length - 1 > currentDisplayCommandIndex
-    ) {
-      setCurrentDisplayCommandIndex(currentDisplayCommandIndex + 1);
-    }
-  }
+  const [currentInterval, setCurrentInterval] = useState<number | undefined>();
 
   function setStartOrEndCoords(type: 'start' | 'end', newCoords: tCoords) {
+    reset();
+
     if (type === 'start') {
       setStartCoords(newCoords);
     } else if (type === 'end') {
@@ -73,28 +60,69 @@ export function PathFinder() {
   }
 
   function runPathFinder() {
-    setDisplayCommands([]);
+    reset();
     const graph = generateGraph();
     const raw = dijkstras(
       generateId(...startCoords),
       generateId(...endCoords),
       graph
     );
-    const coordsVisited: any = raw.visits.map((visit) =>
-      visit.split('.').map((string) => Number.parseInt(string))
-    );
-    const path: any = raw.path.map((path) =>
-      path.split('.').map((string) => Number.parseInt(string))
-    );
+    const coordsVisited: any = raw.visits
+      .slice(1, raw.visits.length - 2)
+      .map((visit) =>
+        visit.split('.').map((string) => Number.parseInt(string))
+      );
+    const path: any = raw.path
+      .slice(1, raw.path.length - 1)
+      .map((path) => path.split('.').map((string) => Number.parseInt(string)));
 
-    setDisplayCommands([
-      {
-        command: DisplayType.Visit,
-        coords: coordsVisited.slice(0, -1),
-        isRememberLast: false,
-      },
-      { command: DisplayType.Path, coords: path, isRememberLast: true },
-    ]);
+    const intervalCommands: IIntervalCommand[] = [
+      { coords: coordsVisited, class: 'visit', time: 10 },
+      { coords: path, class: 'path', time: 70 },
+    ];
+
+    runIntervalCommands(intervalCommands);
+  }
+
+  function runIntervalCommands(
+    intervalCommands: IIntervalCommand[],
+    waitToStartTime = 0
+  ) {
+    const currentIntervalCommand = intervalCommands.shift();
+    if (!currentIntervalCommand) {
+      return;
+    }
+    setTimeout(() => {
+      const length = currentIntervalCommand?.coords.length || 0;
+      let i = 0;
+      const interval = setInterval(() => {
+        if (i === length) {
+          clearInterval(interval);
+          setCurrentInterval(undefined);
+          // run next interval
+          runIntervalCommands(intervalCommands, 500);
+          return;
+        }
+        const coord = currentIntervalCommand.coords[i++];
+        const x = coord[0];
+        const y = coord[1];
+        const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+        const item = cell?.querySelector('div');
+        if (item) {
+          item.className = `item ${currentIntervalCommand.class}`;
+        }
+      }, currentIntervalCommand.time);
+      setCurrentInterval(interval);
+    }, waitToStartTime);
+  }
+
+  function reset() {
+    if (currentInterval) {
+      clearInterval(currentInterval);
+    }
+    debugger;
+    const items = document.querySelectorAll('.item');
+    items.forEach((item) => (item.className = 'item'));
   }
 
   function generateGraph(): Graph {
@@ -134,17 +162,12 @@ export function PathFinder() {
     return graph;
   }
 
-  const displayCommand =
-    currentDisplayCommandIndex !== null
-      ? displayCommands[currentDisplayCommandIndex]
-      : null;
   return (
     <>
       <button onClick={runPathFinder}>RUN PATH FINDER</button>
       <button
         onClick={() => {
-          setDisplayCommands([]);
-          // setWalls([]);
+          reset();
         }}
       >
         RESET
@@ -155,10 +178,8 @@ export function PathFinder() {
         startPoint={startCoords}
         endPoint={endCoords}
         setStartOrEndCoords={setStartOrEndCoords}
-        toggleGraphItem={toggleGraphItem}
         walls={walls}
-        displayCommand={displayCommand}
-        nextCommand={nextCommand}
+        toggleGraphItem={toggleGraphItem}
       />
     </>
   );
