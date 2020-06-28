@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Grid } from './Grid';
 import { Graph } from '../../dataStructures';
-import { dijkstras } from '../../pathfinders';
+import { dijkstras, generateMaze } from '../../pathfinders';
 import { generateId } from '../../util';
+import { Menu } from './Menu';
 
 export type tCoords = [number, number];
 
@@ -22,13 +23,16 @@ interface IIntervalCommand {
   coords: tCoords[];
   class: string;
   time: number;
+  delayTime?: number;
 }
 
 export function PathFinder() {
-  const [dimensions, setDimensions] = useState<tCoords>([50, 25]);
+  const [dimensions, setDimensions] = useState<tCoords>([80, 40]);
   const [startCoords, setStartCoords] = useState<tCoords>([1, 1]);
   const [endCoords, setEndCoords] = useState<tCoords>([3, 3]);
-  const [walls, setWalls] = useState<tCoords[]>([]);
+  const [walls, setWalls] = useState<tCoords[]>(
+    generateMaze(dimensions[0], dimensions[1], startCoords)
+  );
   const [currentInterval, setCurrentInterval] = useState<number | undefined>();
 
   function setStartOrEndCoords(type: 'start' | 'end', newCoords: tCoords) {
@@ -46,6 +50,13 @@ export function PathFinder() {
   }
 
   function toggleGraphItem(coord: tCoords) {
+    // if it is a start or end point ignore
+    if (coord[0] === startCoords[0] && coord[1] === startCoords[1]) {
+      return;
+    }
+    if (coord[0] === endCoords[0] && coord[1] === endCoords[1]) {
+      return;
+    }
     if (!isWall(coord)) {
       // add the wall
       setWalls((oldWalls) => [...oldWalls, coord]);
@@ -78,20 +89,19 @@ export function PathFinder() {
 
     const intervalCommands: IIntervalCommand[] = [
       { coords: coordsVisited, class: 'visit', time: 30 },
-      { coords: path, class: 'path', time: 70 },
+      { coords: path, class: 'path', time: 70, delayTime: 500 },
+      { coords: [endCoords], class: 'found', time: 70 },
     ];
 
     runIntervalCommands(intervalCommands);
   }
 
-  function runIntervalCommands(
-    intervalCommands: IIntervalCommand[],
-    waitToStartTime = 0
-  ) {
+  function runIntervalCommands(intervalCommands: IIntervalCommand[]) {
     const currentIntervalCommand = intervalCommands.shift();
     if (!currentIntervalCommand) {
       return;
     }
+    const waitToStartTime = currentIntervalCommand.delayTime || 0;
     setTimeout(() => {
       const length = currentIntervalCommand?.coords.length || 0;
       let i = 0;
@@ -100,7 +110,7 @@ export function PathFinder() {
           clearInterval(interval);
           setCurrentInterval(undefined);
           // run next interval
-          runIntervalCommands(intervalCommands, 500);
+          runIntervalCommands(intervalCommands);
           return;
         }
         const coord = currentIntervalCommand.coords[i++];
@@ -120,9 +130,18 @@ export function PathFinder() {
     if (currentInterval) {
       clearInterval(currentInterval);
     }
-    debugger;
     const items = document.querySelectorAll('.item');
     items.forEach((item) => (item.className = 'item'));
+    const startCell = document.querySelector(
+      `[data-x="${startCoords[0]}"][data-y="${startCoords[1]}"]`
+    );
+    const startItem = startCell?.querySelector('div');
+    if (startItem) startItem.className = 'item start';
+    const endCell = document.querySelector(
+      `[data-x="${endCoords[0]}"][data-y="${endCoords[1]}"]`
+    );
+    const endItem = endCell?.querySelector('div');
+    if (endItem) endItem.className = 'item end';
   }
 
   function generateGraph(): Graph {
@@ -164,6 +183,7 @@ export function PathFinder() {
 
   return (
     <>
+      <Menu />
       <button onClick={runPathFinder}>RUN PATH FINDER</button>
       <button
         onClick={() => {

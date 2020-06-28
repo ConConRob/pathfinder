@@ -32,15 +32,19 @@ export function Grid({
   const [currentDragTarget, setCurrentDragTarget] = useState<
     'start' | 'end' | null
   >(null);
+  const isMouseDown = useIsMouseDown();
+  const [isAddingItems, setIsAddingItems] = useState(false);
+
+  useEffect(() => {
+    if (isMouseDown) {
+    }
+  }, [isMouseDown]);
 
   const rowsMapper = Array(rows).fill(null);
   const columnsMapper = Array(columns).fill(null);
 
-  const isMouseDown = useIsMouseDown();
-
   function handleEnterCell(coords: tCoords) {
     if (isMouseDown) {
-      debugger;
       toggleGraphItem(coords);
     }
   }

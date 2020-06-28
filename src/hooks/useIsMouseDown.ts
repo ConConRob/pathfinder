@@ -3,8 +3,11 @@ import { useState, useEffect } from 'react';
 export function useIsMouseDown() {
   const [isMouseDown, setIsMouseDown] = useState(false);
   useEffect(() => {
-    function setMouseDown() {
-      setIsMouseDown(true);
+    function setMouseDown(event: MouseEvent) {
+      const element = event.target as HTMLDivElement;
+      if (!element.draggable) {
+        setIsMouseDown(true);
+      }
     }
     function setMouseUp() {
       setIsMouseDown(false);

@@ -19,7 +19,7 @@ interface ICellProps {
 }
 
 interface IMarkerProps {
-  color: string;
+  type: 'start' | 'end';
   onDragStart: () => void;
 }
 
@@ -58,10 +58,18 @@ export function Cell(props: ICellProps) {
       onMouseEnter={onMouseEnter}
     >
       {isStartPoint ? (
-        <Marker color="green" onDragStart={() => handleDrag('start')} />
+        <div
+          className="item start"
+          draggable={true}
+          onDragStart={() => handleDrag('start')}
+        />
       ) : null}
       {isEndPoint ? (
-        <Marker color="red" onDragStart={() => handleDrag('end')} />
+        <div
+          className="item end"
+          draggable={true}
+          onDragStart={() => handleDrag('end')}
+        />
       ) : null}
       {isStartPoint || isEndPoint ? null : <div className="item"></div>}
     </StyledCell>
@@ -81,12 +89,13 @@ const StyledCell = styled.div<IStyledCellProps>`
   /* FOR IF VISITED TIMING */
 
   /* FOR IF PATH TIME */
-  background-color: ${({ isWall }) => {
+  background-color: white;
+  /* ${({ isWall }) => {
     if (isWall) {
       return 'black';
     }
     return 'white';
-  }};
+  }}; */
 
   /* VISIT PATH */
   @keyframes visited {
@@ -142,6 +151,23 @@ const StyledCell = styled.div<IStyledCellProps>`
       background-color: red;
       animation-duration: 0.5s;
     }
+    &.found {
+      transform: scale(1.2,1.2);
+      background-color: yellow;
+      border-radius: 30px;
+    }
+    &.start{
+      width: 70%;
+      height: 70%;
+      border-radius: 100%;
+      background-color: green;
+    }
+    &.end{
+      width: 70%;
+      height: 70%;
+      border-radius: 100%;
+      background-color: red;
+    }
   }
   box-sizing: border-box;
 
@@ -153,15 +179,6 @@ const StyledCell = styled.div<IStyledCellProps>`
 `;
 
 function Marker(props: IMarkerProps) {
-  const { color, onDragStart } = props;
-  return (
-    <StyledMarker color={color} draggable={true} onDragStart={onDragStart} />
-  );
+  const { type, onDragStart } = props;
+  return <div className={type} draggable={true} onDragStart={onDragStart} />;
 }
-
-const StyledMarker = styled.div<IMarkerProps>`
-  width: 70%;
-  height: 70%;
-  border-radius: 100%;
-  background-color: ${({ color }) => color};
-`;
