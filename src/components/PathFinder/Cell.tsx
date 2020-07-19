@@ -87,9 +87,17 @@ const StyledCell = styled.div<IStyledCellProps>`
   height: ${({ height }) => height};
   border-radius: 6px;
   /* FOR IF VISITED TIMING */
-
-  /* FOR IF PATH TIME */
   background-color: white;
+  ${({ wallType }) => {
+    switch (wallType) {
+      case 'Wall':
+        return 'background-color:black !important;';
+      case 'Sand':
+        return 'background-color:yellow;';
+      case 'Clear':
+        return '';
+    }
+  }}
 
   /* VISIT PATH */
   @keyframes visited {
@@ -120,29 +128,20 @@ const StyledCell = styled.div<IStyledCellProps>`
     }
   }
   .item {
-    width: 100%;
-    height: 100%;
+    width: 70%;
+    height: 70%;
     border-radius: 5px;
-    background-color: white;
+    background-color: none;
 
     transition: background-color 0.5s;
-    ${({ wallType }) => {
-      switch (wallType) {
-        case 'Wall':
-          return 'background-color:black !important;';
-        case 'Sand':
-          return 'background-color:yellow;';
-        case 'Clear':
-          return '';
-      }
-    }}
+
     &.path {
       background-color: blue;
     }
 
     &.visit {
       animation: visited;
-
+      border-radius: 50px;
       background-color: red;
       animation-duration: 0.5s;
     }
@@ -151,7 +150,7 @@ const StyledCell = styled.div<IStyledCellProps>`
       animation: visited;
       animation-direction: reverse;
 
-      background-color: red;
+      background-color: none;
       animation-duration: 0.5s;
     }
     &.found {
