@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Cell } from './Cell';
 import styled from 'styled-components';
-import { tCoords, IDisplayCommand, DisplayType } from './PathFinder';
+import { tCoords, IDisplayCommand, DisplayType, tMaterial } from './PathFinder';
 import { generateId } from '../../util';
 import { useIsMouseDown } from '../../hooks';
 
@@ -10,7 +10,7 @@ interface IGridProps {
   columns: number;
   startPoint: tCoords;
   endPoint: tCoords;
-  walls: tCoords[];
+  walls: { coord: tCoords; material: tMaterial }[];
   setStartOrEndCoords: (type: 'start' | 'end', newCoords: tCoords) => void;
   toggleGraphItem: (coords: tCoords) => void;
 }
@@ -72,8 +72,10 @@ export function Grid({
             key={generateId(columnI, rowI)}
             isStartPoint={columnI === startPoint[0] && rowI === startPoint[1]}
             isEndPoint={columnI === endPoint[0] && rowI === endPoint[1]}
-            isWall={
-              !!walls.find((coord) => coord[0] === columnI && coord[1] === rowI)
+            wallType={
+              walls.find(
+                (wall) => wall.coord[0] === columnI && wall.coord[1] === rowI
+              )?.material || 'Clear'
             }
             width={` ${(1 / columns) * 100}%`}
             height={`${(1 / rows) * 100}%`}

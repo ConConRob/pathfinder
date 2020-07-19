@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { tCoords, DisplayType } from './PathFinder';
+import { tCoords, DisplayType, tMaterial } from './PathFinder';
 
 // make saved last state happen at this level
 
@@ -10,7 +10,7 @@ interface ICellProps {
   height: number | string;
   isStartPoint: boolean;
   isEndPoint: boolean;
-  isWall: boolean;
+  wallType: tMaterial;
   coords: [number, number];
   handleDrop: (newCoords: tCoords) => void;
   handleDrag: (type: 'start' | 'end') => void;
@@ -34,7 +34,7 @@ export function Cell(props: ICellProps) {
     handleDrag,
     onClick,
     onMouseEnter,
-    isWall,
+    wallType,
     height,
     width,
   } = props;
@@ -45,7 +45,7 @@ export function Cell(props: ICellProps) {
 
   return (
     <StyledCell
-      isWall={isWall}
+      wallType={wallType}
       onDragOver={(event) => {
         event.preventDefault();
       }}
@@ -79,7 +79,7 @@ export function Cell(props: ICellProps) {
 interface IStyledCellProps {
   width: string | number;
   height: string | number;
-  isWall: boolean;
+  wallType: tMaterial;
 }
 
 const StyledCell = styled.div<IStyledCellProps>`
@@ -90,12 +90,6 @@ const StyledCell = styled.div<IStyledCellProps>`
 
   /* FOR IF PATH TIME */
   background-color: white;
-  /* ${({ isWall }) => {
-    if (isWall) {
-      return 'black';
-    }
-    return 'white';
-  }}; */
 
   /* VISIT PATH */
   @keyframes visited {
@@ -132,7 +126,16 @@ const StyledCell = styled.div<IStyledCellProps>`
     background-color: white;
 
     transition: background-color 0.5s;
-    ${({ isWall }) => (isWall ? 'background-color:black !important;' : '')}
+    ${({ wallType }) => {
+      switch (wallType) {
+        case 'Wall':
+          return 'background-color:black !important;';
+        case 'Sand':
+          return 'background-color:yellow;';
+        case 'Clear':
+          return '';
+      }
+    }}
     &.path {
       background-color: blue;
     }
@@ -152,17 +155,17 @@ const StyledCell = styled.div<IStyledCellProps>`
       animation-duration: 0.5s;
     }
     &.found {
-      transform: scale(1.2,1.2);
+      transform: scale(1.2, 1.2);
       background-color: yellow;
       border-radius: 30px;
     }
-    &.start{
+    &.start {
       width: 70%;
       height: 70%;
       border-radius: 100%;
       background-color: green;
     }
-    &.end{
+    &.end {
       width: 70%;
       height: 70%;
       border-radius: 100%;

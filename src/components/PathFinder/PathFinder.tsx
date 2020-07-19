@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Grid } from './Grid';
 import { Graph } from '../../dataStructures';
 import { dijkstras, generateMaze } from '../../pathfinders';
@@ -6,6 +6,8 @@ import { generateId } from '../../util';
 import { Menu } from './Menu';
 
 export type tCoords = [number, number];
+export type tAlgorithm = 'Dijkstras' | 'Dfs' | 'Bfs';
+export type tMaterial = 'Sand' | 'Clear' | 'Wall';
 
 export enum DisplayType {
   Path = 'path',
@@ -13,6 +15,7 @@ export enum DisplayType {
   UndoVisit = 'undo visit',
   Untouched = 'untouched',
 }
+
 export interface IDisplayCommand {
   command: DisplayType;
   coords: tCoords[];
@@ -27,11 +30,11 @@ interface IIntervalCommand {
 }
 
 export function PathFinder() {
-  const [dimensions, setDimensions] = useState<tCoords>([80, 40]);
-  const [startCoords, setStartCoords] = useState<tCoords>([1, 1]);
+  const [dimensions, setDimensions] = useState<tCoords>([40, 20]);
+  const [startCoords, setStartCoords] = useState<tCoords>([0, 0]);
   const [endCoords, setEndCoords] = useState<tCoords>([3, 3]);
-  const [walls, setWalls] = useState<tCoords[]>(
-    generateMaze(dimensions[0], dimensions[1], startCoords)
+  const [walls, setWalls] = useState<{ coord: tCoords; material: tMaterial }[]>(
+    []
   );
   const [currentInterval, setCurrentInterval] = useState<number | undefined>();
 
@@ -45,8 +48,11 @@ export function PathFinder() {
     }
   }
 
-  function isWall(coord: tCoords) {
-    return !!walls.find((wall) => wall[0] === coord[0] && wall[1] === coord[1]);
+  function spaceType(coord: tCoords) {
+    const wall = walls.find(
+      (wall) => wall.coord[0] === coord[0] && wall.coord[1] === coord[1]
+    );
+    return wall?.material || 'Clear';
   }
 
   function toggleGraphItem(coord: tCoords) {
@@ -57,14 +63,16 @@ export function PathFinder() {
     if (coord[0] === endCoords[0] && coord[1] === endCoords[1]) {
       return;
     }
-    if (!isWall(coord)) {
+    debugger;
+    if (spaceType(coord) === 'Clear') {
       // add the wall
-      setWalls((oldWalls) => [...oldWalls, coord]);
+      setWalls((oldWalls) => [...oldWalls, { coord, material: 'Wall' }]);
     } else {
       // remove the wall
       setWalls((oldWalls) =>
         oldWalls.filter(
-          (oldWall) => oldWall[0] !== coord[0] || oldWall[1] !== coord[1]
+          (oldWall) =>
+            oldWall.coord[0] !== coord[0] || oldWall.coord[1] !== coord[1]
         )
       );
     }
@@ -160,21 +168,30 @@ export function PathFinder() {
         // calculate 4 neighbors and check if in dimensions. If so add edge
         const currentId = generateId(x, y);
         // top
-        if (y - 1 >= 0 && !isWall([x, y - 1])) {
-          graph.addEdge(currentId, generateId(x, y - 1), 1);
+        const SAND_VALUE = 30;
+        if (y - 1 >= 0 && spaceType([x, y - 1]) !== 'Wall') {
+          if (spaceType([x, y - 1]) === 'Sand')
+            graph.addEdge(currentId, generateId(x, y - 1), SAND_VALUE);
+          else graph.addEdge(currentId, generateId(x, y - 1), 1);
         } else {
         }
         // right
-        if (x + 1 < dimensions[0] && !isWall([x + 1, y])) {
-          graph.addEdge(currentId, generateId(x + 1, y), 1);
+        if (x + 1 < dimensions[0] && spaceType([x + 1, y]) !== 'Wall') {
+          if (spaceType([x + 1, y]) === 'Sand')
+            graph.addEdge(currentId, generateId(x + 1, y), SAND_VALUE);
+          else graph.addEdge(currentId, generateId(x + 1, y), 1);
         }
         // bottom
-        if (y + 1 < dimensions[1] && !isWall([x, y + 1])) {
-          graph.addEdge(currentId, generateId(x, y + 1), 1);
+        if (y + 1 < dimensions[1] && spaceType([x, y + 1]) !== 'Wall') {
+          if (spaceType([x, y + 1]) === 'Sand')
+            graph.addEdge(currentId, generateId(x, y + 1), SAND_VALUE);
+          else graph.addEdge(currentId, generateId(x, y + 1), 1);
         }
         // left
-        if (x - 1 >= 0 && !isWall([x - 1, y])) {
-          graph.addEdge(currentId, generateId(x - 1, y), 1);
+        if (x - 1 >= 0 && spaceType([x - 1, y]) !== 'Wall') {
+          if (spaceType([x - 1, y]) === 'Sand')
+            graph.addEdge(currentId, generateId(x - 1, y), SAND_VALUE);
+          else graph.addEdge(currentId, generateId(x - 1, y), 1);
         }
       }
     }
@@ -183,15 +200,27 @@ export function PathFinder() {
 
   return (
     <>
-      <Menu />
-      <button onClick={runPathFinder}>RUN PATH FINDER</button>
-      <button
-        onClick={() => {
-          reset();
+      <Menu
+        algorithm="Dijkstras"
+        setAlgorithm={(name: tAlgorithm) => {}}
+        material="Wall"
+        setMaterial={(name: tMaterial) => {}}
+        generateMaze={() => {
+          setWalls(
+            generateMaze(
+              dimensions[0],
+              dimensions[1],
+              startCoords
+            ).map((coord) => ({ coord, material: 'Sand' }))
+          );
         }}
-      >
-        RESET
-      </button>
+        reset={() => {
+          reset();
+          setWalls([]);
+        }}
+        play={runPathFinder}
+      />
+
       <Grid
         rows={dimensions[1]}
         columns={dimensions[0]}
