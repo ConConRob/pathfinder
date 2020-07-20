@@ -33,7 +33,6 @@ export function Grid({
     'start' | 'end' | null
   >(null);
   const isMouseDown = useIsMouseDown();
-  const [isAddingItems, setIsAddingItems] = useState(false);
 
   useEffect(() => {
     if (isMouseDown) {

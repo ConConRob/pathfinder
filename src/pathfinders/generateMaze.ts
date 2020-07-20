@@ -101,7 +101,6 @@ export function generateMaze(
       }
     }
   }
-  console.log(walls);
   return walls.map((w) => w.split('.').map((n) => parseInt(n))) as tCoords[];
 }
 

@@ -37,7 +37,7 @@ export function PathFinder() {
     []
   );
   const [currentInterval, setCurrentInterval] = useState<number | undefined>();
-
+  const [paintingMaterial, setPaintingMaterial] = useState<tMaterial>('Wall');
   function setStartOrEndCoords(type: 'start' | 'end', newCoords: tCoords) {
     reset();
 
@@ -63,19 +63,17 @@ export function PathFinder() {
     if (coord[0] === endCoords[0] && coord[1] === endCoords[1]) {
       return;
     }
-    debugger;
-    if (spaceType(coord) === 'Clear') {
-      // add the wall
-      setWalls((oldWalls) => [...oldWalls, { coord, material: 'Wall' }]);
-    } else {
-      // remove the wall
-      setWalls((oldWalls) =>
-        oldWalls.filter(
-          (oldWall) =>
-            oldWall.coord[0] !== coord[0] || oldWall.coord[1] !== coord[1]
-        )
+    setWalls((oldWalls) => {
+      // filter out at this location
+      const newWalls = oldWalls.filter(
+        (oldWall) =>
+          oldWall.coord[0] !== coord[0] || oldWall.coord[1] !== coord[1]
       );
-    }
+      if (paintingMaterial !== 'Clear') {
+        newWalls.push({ coord, material: paintingMaterial });
+      }
+      return newWalls;
+    });
   }
 
   function runPathFinder() {
@@ -203,15 +201,16 @@ export function PathFinder() {
       <Menu
         algorithm="Dijkstras"
         setAlgorithm={(name: tAlgorithm) => {}}
-        material="Wall"
-        setMaterial={(name: tMaterial) => {}}
+        material={paintingMaterial}
+        setMaterial={setPaintingMaterial}
         generateMaze={() => {
+          reset();
           setWalls(
             generateMaze(
               dimensions[0],
               dimensions[1],
               startCoords
-            ).map((coord) => ({ coord, material: 'Sand' }))
+            ).map((coord) => ({ coord, material: 'Wall' }))
           );
         }}
         reset={() => {

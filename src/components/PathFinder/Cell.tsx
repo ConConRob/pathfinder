@@ -117,14 +117,18 @@ const StyledCell = styled.div<IStyledCellProps>`
       background-color: yellow;
       border-radius: 100%;
     }
-    90% {
+    70% {
       background-color: orange;
     }
-    to {
+    80% {
       background-color: red;
       border-radius: 5px;
       width: 100%;
       height: 100%;
+    }
+    to {
+      width: 70%;
+      height: 70%;
     }
   }
   .item {
@@ -141,7 +145,6 @@ const StyledCell = styled.div<IStyledCellProps>`
 
     &.visit {
       animation: visited;
-      border-radius: 50px;
       background-color: red;
       animation-duration: 0.5s;
     }
